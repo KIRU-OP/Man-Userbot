@@ -7,6 +7,15 @@
 # Recode by @mrismanaziz
 # t.me/SharingUserbot
 #
+
+# ᴋɪʀᴜ - ᴜsᴇʀʙᴏᴛ
+# Copyright (c) 2026 KIRU-OP
+# Credits: KIRU-OP Development Team
+# Modified and maintained by KIRU-OP.
+# Based on Man-Userbot; original copyright and license notices are retained.
+# Repository: https://github.com/KIRU-OP/Man-Userbot
+# All Rights Reserved.
+
 """ Userbot initialization. """
 
 import logging
