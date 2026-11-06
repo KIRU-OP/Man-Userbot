@@ -5,6 +5,12 @@
 #
 # Ported for Lord-Userbot By liualvinas/Alvin
 
+# ᴋɪʀᴜ - ᴜsᴇʀʙᴏᴛ
+# Copyright (c) 2026 KIRU-OP
+# Credits: KIRU-OP Development Team
+# Maintained by KIRU-OP
+# Repository: https://github.com/KIRU-OP/Man-Userbot
+
 from telethon import events
 
 from userbot import CMD_HANDLER as cmd
