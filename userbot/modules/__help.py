@@ -16,6 +16,12 @@
 # @Qulec tarafından yazılmıştır.
 # Thanks @Spechide.
 
+# ᴋɪʀᴜ - ᴜsᴇʀʙᴏᴛ
+# Copyright (c) 2026 KIRU-OP
+# Credits: KIRU-OP Development Team
+# Maintained by KIRU-OP
+# Repository: https://github.com/KIRU-OP/Man-Userbot
+
 from telethon.errors.rpcerrorlist import BotInlineDisabledError as noinline
 from telethon.errors.rpcerrorlist import YouBlockedUserError
 from telethon.tl.functions.contacts import UnblockRequest
