@@ -2,8 +2,12 @@
 # Copyright (c) 2022 Man-Userbot
 # Credits: @mrismanaziz || https://github.com/mrismanaziz
 #
-# This file is a part of < https://github.com/mrismanaziz/Man-Userbot/ >
-# t.me/SharingUserbot & t.me/Lunatic0de
+
+# ᴋɪʀᴜ - ᴜsᴇʀʙᴏᴛ
+# Copyright (c) 2026 KIRU-OP
+# Credits: KIRU-OP Development Team
+# Maintained by KIRU-OP
+# Repository: https://github.com/KIRU-OP/Man-Userbot
 
 from .client_list import client_id, clients_list
 from .logger import man_userbot_on
