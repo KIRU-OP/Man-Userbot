@@ -3,6 +3,12 @@
 # Licensed under the Raphielscape Public License, Version 1.c (the "License");
 # you may not use this file except in compliance with the License.
 #
+# ᴋɪʀᴜ - ᴜsᴇʀʙᴏᴛ
+# Copyright (c) 2026 KIRU-OP
+# Credits: KIRU-OP Development Team
+# Maintained by KIRU-OP
+# Repository: https://github.com/KIRU-OP/Man-Userbot
+
 """A module for helping ban group join spammers."""
 
 from asyncio import sleep
