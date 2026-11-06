@@ -1,31 +1,15 @@
 try:
-    from userbot.modules.sql_helper import BASE, SESSION
+    from userbot.modules.sql_helper import DB
 except ImportError:
     raise AttributeError
 import threading
-
-from sqlalchemy import BigInteger, Column, Integer, String
 
 DEF_COUNT = 0
 DEF_LIMIT = 0
 DEF_OBJ = (None, DEF_COUNT, DEF_LIMIT)
 
-
-class FloodControl(BASE):
-    __tablename__ = "antiflood"
-    chat_id = Column(String(14), primary_key=True)
-    user_id = Column(BigInteger)
-    count = Column(Integer, default=DEF_COUNT)
-    limit = Column(Integer, default=DEF_LIMIT)
-
-    def __init__(self, chat_id):
-        self.chat_id = str(chat_id)  # ensure string
-
-    def __repr__(self):
-        return "<flood control for %s>" % self.chat_id
-
-
-FloodControl.__table__.create(checkfirst=True)
+FLOOD = DB["antiflood"]
+FLOOD.create_index("chat_id", unique=True)
 
 INSERTION_LOCK = threading.RLock()
 
@@ -33,18 +17,18 @@ CHAT_FLOOD = {}
 
 
 def set_flood(chat_id, amount):
+    amount = int(amount)
     with INSERTION_LOCK:
-        flood = SESSION.query(FloodControl).get(str(chat_id))
-        if not flood:
-            flood = FloodControl(str(chat_id))
-
-        flood.user_id = None
-        flood.limit = amount
+        FLOOD.update_one(
+            {"chat_id": str(chat_id)},
+            {
+                "$set": {"user_id": None, "limit": amount},
+                "$setOnInsert": {"count": DEF_COUNT},
+            },
+            upsert=True,
+        )
 
         CHAT_FLOOD[str(chat_id)] = (None, DEF_COUNT, amount)
-
-        SESSION.add(flood)
-        SESSION.commit()
 
 
 def update_flood(chat_id: str, user_id) -> bool:
@@ -76,20 +60,19 @@ def get_flood_limit(chat_id):
 
 def migrate_chat(old_chat_id, new_chat_id):
     with INSERTION_LOCK:
-        flood = SESSION.query(FloodControl).get(str(old_chat_id))
+        flood = FLOOD.find_one({"chat_id": str(old_chat_id)})
         if flood:
             CHAT_FLOOD[str(new_chat_id)] = CHAT_FLOOD.get(str(old_chat_id), DEF_OBJ)
-            flood.chat_id = str(new_chat_id)
-            SESSION.commit()
-
-        SESSION.close()
+            FLOOD.update_one(
+                {"chat_id": str(old_chat_id)},
+                {"$set": {"chat_id": str(new_chat_id)}},
+            )
 
 
 def __load_flood_settings():
     global CHAT_FLOOD
-    try:
-        all_chats = SESSION.query(FloodControl).all()
-        CHAT_FLOOD = {chat.chat_id: (None, DEF_COUNT, chat.limit) for chat in all_chats}
-    finally:
-        SESSION.close()
+    CHAT_FLOOD = {
+        chat["chat_id"]: (None, DEF_COUNT, chat.get("limit", DEF_LIMIT))
+        for chat in FLOOD.find()
+    }
     return CHAT_FLOOD

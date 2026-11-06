@@ -1,74 +1,30 @@
-from sqlalchemy import Column, Numeric, String, UnicodeText
+from userbot.modules.sql_helper import DB, to_doc, to_docs, upsert
 
-from userbot.modules.sql_helper import BASE, SESSION
-
-
-class Filter(BASE):
-    __tablename__ = "filters"
-    chat_id = Column(String(14), primary_key=True)
-    keyword = Column(UnicodeText, primary_key=True, nullable=False)
-    reply = Column(UnicodeText)
-    f_mesg_id = Column(Numeric)
-
-    def __init__(self, chat_id, keyword, reply, f_mesg_id):
-        self.chat_id = str(chat_id)
-        self.keyword = keyword
-        self.reply = reply
-        self.f_mesg_id = f_mesg_id
-
-    def __eq__(self, other):
-        return bool(
-            isinstance(other, Filter)
-            and self.chat_id == other.chat_id
-            and self.keyword == other.keyword
-        )
-
-
-Filter.__table__.create(checkfirst=True)
+FILTERS = DB["filters"]
+FILTERS.create_index([("chat_id", 1), ("keyword", 1)], unique=True)
 
 
 def get_filter(chat_id, keyword):
-    try:
-        return SESSION.query(Filter).get((str(chat_id), keyword))
-    finally:
-        SESSION.close()
+    return to_doc(FILTERS.find_one({"chat_id": str(chat_id), "keyword": keyword}))
 
 
 def get_filters(chat_id):
-    try:
-        return SESSION.query(Filter).filter(Filter.chat_id == str(chat_id)).all()
-    finally:
-        SESSION.close()
+    return to_docs(FILTERS.find({"chat_id": str(chat_id)}))
 
 
 def add_filter(chat_id, keyword, reply, f_mesg_id):
-    to_check = get_filter(chat_id, keyword)
-    if not to_check:
-        adder = Filter(str(chat_id), keyword, reply, f_mesg_id)
-        SESSION.add(adder)
-        SESSION.commit()
-        return True
-    rem = SESSION.query(Filter).get((str(chat_id), keyword))
-    SESSION.delete(rem)
-    SESSION.commit()
-    adder = Filter(str(chat_id), keyword, reply, f_mesg_id)
-    SESSION.add(adder)
-    SESSION.commit()
-    return False
+    """Returns True if the filter is new, False if it replaced an old one."""
+    return upsert(
+        FILTERS,
+        {"chat_id": str(chat_id), "keyword": keyword},
+        {"reply": reply, "f_mesg_id": f_mesg_id},
+    )
 
 
 def remove_filter(chat_id, keyword):
-    to_check = get_filter(chat_id, keyword)
-    if not to_check:
-        return False
-    rem = SESSION.query(Filter).get((str(chat_id), keyword))
-    SESSION.delete(rem)
-    SESSION.commit()
-    return True
+    result = FILTERS.delete_one({"chat_id": str(chat_id), "keyword": keyword})
+    return bool(result.deleted_count)
 
 
 def remove_all_filters(chat_id):
-    saved_filter = SESSION.query(Filter).filter(Filter.chat_id == str(chat_id))
-    if saved_filter:
-        saved_filter.delete()
-        SESSION.commit()
+    FILTERS.delete_many({"chat_id": str(chat_id)})

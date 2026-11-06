@@ -1,62 +1,29 @@
 try:
-    from userbot.modules.sql_helper import BASE, SESSION
+    from userbot.modules.sql_helper import DB, to_doc, to_docs, upsert
 except ImportError:
     raise AttributeError
-from sqlalchemy import Column, Numeric, String, UnicodeText
 
-
-class Notes(BASE):
-    __tablename__ = "notes"
-    chat_id = Column(String(14), primary_key=True)
-    keyword = Column(UnicodeText, primary_key=True, nullable=False)
-    reply = Column(UnicodeText)
-    f_mesg_id = Column(Numeric)
-
-    def __init__(self, chat_id, keyword, reply, f_mesg_id):
-        self.chat_id = str(chat_id)
-        self.keyword = keyword
-        self.reply = reply
-        self.f_mesg_id = f_mesg_id
-
-
-Notes.__table__.create(checkfirst=True)
+NOTES = DB["notes"]
+NOTES.create_index([("chat_id", 1), ("keyword", 1)], unique=True)
 
 
 def get_note(chat_id, keyword):
-    try:
-        return SESSION.query(Notes).get((str(chat_id), keyword))
-    finally:
-        SESSION.close()
+    return to_doc(NOTES.find_one({"chat_id": str(chat_id), "keyword": keyword}))
 
 
 def get_notes(chat_id):
-    try:
-        return SESSION.query(Notes).filter(Notes.chat_id == str(chat_id)).all()
-    finally:
-        SESSION.close()
+    return to_docs(NOTES.find({"chat_id": str(chat_id)}))
 
 
 def add_note(chat_id, keyword, reply, f_mesg_id):
-    to_check = get_note(chat_id, keyword)
-    if not to_check:
-        adder = Notes(str(chat_id), keyword, reply, f_mesg_id)
-        SESSION.add(adder)
-        SESSION.commit()
-        return True
-    rem = SESSION.query(Notes).get((str(chat_id), keyword))
-    SESSION.delete(rem)
-    SESSION.commit()
-    adder = Notes(str(chat_id), keyword, reply, f_mesg_id)
-    SESSION.add(adder)
-    SESSION.commit()
-    return False
+    """Returns True if the note is new, False if it replaced an old one."""
+    return upsert(
+        NOTES,
+        {"chat_id": str(chat_id), "keyword": keyword},
+        {"reply": reply, "f_mesg_id": f_mesg_id},
+    )
 
 
 def rm_note(chat_id, keyword):
-    to_check = get_note(chat_id, keyword)
-    if not to_check:
-        return False
-    rem = SESSION.query(Notes).get((str(chat_id), keyword))
-    SESSION.delete(rem)
-    SESSION.commit()
-    return True
+    result = NOTES.delete_one({"chat_id": str(chat_id), "keyword": keyword})
+    return bool(result.deleted_count)

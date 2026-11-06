@@ -1,56 +1,30 @@
-from sqlalchemy import Column, Numeric, UnicodeText
+from userbot.modules.sql_helper import DB, to_doc, to_docs, upsert
 
-from userbot.modules.sql_helper import BASE, SESSION
-
-
-class LydiaAI(BASE):
-    __tablename__ = "lydia_ai"
-    user_id = Column(Numeric, primary_key=True)
-    chat_id = Column(Numeric, primary_key=True)
-    session_id = Column(UnicodeText)
-    session_expires = Column(Numeric)
-
-    def __init__(self, user_id, chat_id, session_id, session_expires):
-        self.user_id = user_id
-        self.chat_id = chat_id
-        self.session_id = session_id
-        self.session_expires = session_expires
-
-
-LydiaAI.__table__.create(checkfirst=True)
+LYDIA = DB["lydia_ai"]
+LYDIA.create_index([("user_id", 1), ("chat_id", 1)], unique=True)
 
 
 def get_s(user_id, chat_id):
     try:
-        return SESSION.query(LydiaAI).get((user_id, chat_id))
-    except BaseException:
+        return to_doc(LYDIA.find_one({"user_id": user_id, "chat_id": chat_id}))
+    except Exception:
         return None
-    finally:
-        SESSION.close()
 
 
 def get_all_s():
     try:
-        return SESSION.query(LydiaAI).all()
-    except BaseException:
+        return to_docs(LYDIA.find())
+    except Exception:
         return None
-    finally:
-        SESSION.close()
 
 
 def add_s(user_id, chat_id, session_id, session_expires):
-    adder = SESSION.query(LydiaAI).get((user_id, chat_id))
-    if adder:
-        adder.session_id = session_id
-        adder.session_expires = session_expires
-    else:
-        adder = LydiaAI(user_id, chat_id, session_id, session_expires)
-    SESSION.add(adder)
-    SESSION.commit()
+    upsert(
+        LYDIA,
+        {"user_id": user_id, "chat_id": chat_id},
+        {"session_id": session_id, "session_expires": session_expires},
+    )
 
 
 def remove_s(user_id, chat_id):
-    note = SESSION.query(LydiaAI).get((user_id, chat_id))
-    if note:
-        SESSION.delete(note)
-        SESSION.commit()
+    LYDIA.delete_one({"user_id": user_id, "chat_id": chat_id})

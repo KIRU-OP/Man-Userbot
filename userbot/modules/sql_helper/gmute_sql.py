@@ -1,39 +1,23 @@
 try:
-    from userbot.modules.sql_helper import BASE, SESSION
+    from userbot.modules.sql_helper import DB, to_docs, upsert
 except ImportError:
     raise AttributeError
 
-from sqlalchemy import Column, String
-
-
-class GMute(BASE):
-    __tablename__ = "gmute"
-    sender = Column(String(14), primary_key=True)
-
-    def __init__(self, sender):
-        self.sender = str(sender)
-
-
-GMute.__table__.create(checkfirst=True)
+GMUTE = DB["gmute"]
+GMUTE.create_index("sender", unique=True)
 
 
 def is_gmuted(sender_id):
+    # Kept as before: returns every gmuted sender, callers filter the list.
     try:
-        return SESSION.query(GMute).all()
-    except BaseException:
+        return to_docs(GMUTE.find())
+    except Exception:
         return None
-    finally:
-        SESSION.close()
 
 
 def gmute(sender):
-    adder = GMute(str(sender))
-    SESSION.add(adder)
-    SESSION.commit()
+    upsert(GMUTE, {"sender": str(sender)})
 
 
 def ungmute(sender):
-    rem = SESSION.query(GMute).get((str(sender)))
-    if rem:
-        SESSION.delete(rem)
-        SESSION.commit()
+    GMUTE.delete_one({"sender": str(sender)})

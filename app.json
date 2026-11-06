@@ -26,16 +26,13 @@
     "HEROKU_API_KEY": {
       "description": "Ambil Heroku API KEY mu disini » https://dashboard.heroku.com/account",
       "required": true
+    },
+    "MONGO_URI": {
+      "description": "URL MongoDB mu, contoh: mongodb+srv://user:password@cluster0.xxxxx.mongodb.net/ (ambil dari mongodb.com/atlas)",
+      "required": true
     }
   },
-  "addons": [
-    {
-    "plan": "heroku-postgresql",
-      "options": {
-        "version": "12"
-      }
-    }
-  ],
+  "addons": [],
   "buildpacks": [
     {
       "url": "heroku/python"

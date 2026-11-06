@@ -1,38 +1,24 @@
 try:
-    from userbot.modules.sql_helper import BASE, SESSION
+    from userbot.modules.sql_helper import DB, to_doc
 except ImportError:
     raise AttributeError
-from sqlalchemy import Column, String
 
-
-class PMPermit(BASE):
-    __tablename__ = "pmpermit"
-    chat_id = Column(String(14), primary_key=True)
-
-    def __init__(self, chat_id):
-        self.chat_id = str(chat_id)  # ensure string
-
-
-PMPermit.__table__.create(checkfirst=True)
+PMPERMIT = DB["pmpermit"]
+PMPERMIT.create_index("chat_id", unique=True)
 
 
 def is_approved(chat_id):
     try:
-        return SESSION.query(PMPermit).filter(PMPermit.chat_id == str(chat_id)).one()
-    except BaseException:
+        return to_doc(PMPERMIT.find_one({"chat_id": str(chat_id)}))
+    except Exception:
         return None
-    finally:
-        SESSION.close()
 
 
 def approve(chat_id):
-    adder = PMPermit(str(chat_id))
-    SESSION.add(adder)
-    SESSION.commit()
+    # A plain insert on purpose: approving the same chat twice raises
+    # pymongo.errors.DuplicateKeyError, which pmpermit.py handles.
+    PMPERMIT.insert_one({"chat_id": str(chat_id)})
 
 
 def dissprove(chat_id):
-    rem = SESSION.query(PMPermit).get(str(chat_id))
-    if rem:
-        SESSION.delete(rem)
-        SESSION.commit()
+    PMPERMIT.delete_one({"chat_id": str(chat_id)})

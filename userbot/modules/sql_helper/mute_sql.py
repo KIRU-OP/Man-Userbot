@@ -1,37 +1,20 @@
 try:
-    from userbot.modules.sql_helper import BASE, SESSION
+    from userbot.modules.sql_helper import DB, upsert
 except ImportError:
     raise Exception("Hello!")
 
-from sqlalchemy import Column, String
-
-
-class Mute(BASE):
-    __tablename__ = "mute"
-    sender = Column(String(14), primary_key=True)
-    chat_id = Column(String(14), primary_key=True)
-
-    def __init__(self, sender, chat_id):
-        self.sender = str(sender)
-        self.chat_id = str(chat_id)
-
-
-Mute.__table__.create(checkfirst=True)
+MUTE = DB["mute"]
+MUTE.create_index([("sender", 1), ("chat_id", 1)], unique=True)
 
 
 def is_muted(sender, chat_id):
-    user = SESSION.query(Mute).get((str(sender), str(chat_id)))
+    user = MUTE.find_one({"sender": str(sender), "chat_id": str(chat_id)})
     return bool(user)
 
 
 def mute(sender, chat_id):
-    adder = Mute(str(sender), str(chat_id))
-    SESSION.add(adder)
-    SESSION.commit()
+    upsert(MUTE, {"sender": str(sender), "chat_id": str(chat_id)})
 
 
 def unmute(sender, chat_id):
-    rem = SESSION.query(Mute).get((str(sender), str(chat_id)))
-    if rem:
-        SESSION.delete(rem)
-        SESSION.commit()
+    MUTE.delete_one({"sender": str(sender), "chat_id": str(chat_id)})

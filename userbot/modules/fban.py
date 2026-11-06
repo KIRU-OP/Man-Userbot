@@ -1,6 +1,6 @@
 # Copyright (C) 2020 KenHV
 
-from sqlalchemy.exc import IntegrityError
+from pymongo.errors import DuplicateKeyError as IntegrityError
 
 from userbot import CMD_HELP, bot
 from userbot.utils import man_cmd

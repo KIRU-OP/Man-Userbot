@@ -1,44 +1,25 @@
 try:
-    from userbot.modules.sql_helper import BASE, SESSION
+    from userbot.modules.sql_helper import DB, to_docs
 except ImportError:
     raise AttributeError
 
-from sqlalchemy import Column, String, UnicodeText
-
-
-class Fban(BASE):
-    __tablename__ = "fban"
-    chat_id = Column(String(14), primary_key=True)
-    fed_name = Column(UnicodeText)
-
-    def __init__(self, chat_id, fed_name):
-        self.chat_id = str(chat_id)
-        self.fed_name = fed_name
-
-
-Fban.__table__.create(checkfirst=True)
+FBAN = DB["fban"]
+FBAN.create_index("chat_id", unique=True)
 
 
 def get_flist():
-    try:
-        return SESSION.query(Fban).all()
-    finally:
-        SESSION.close()
+    return to_docs(FBAN.find())
 
 
 def add_flist(chat_id, fed_name):
-    adder = Fban(str(chat_id), fed_name)
-    SESSION.add(adder)
-    SESSION.commit()
+    # A plain insert on purpose: adding the same chat twice raises
+    # pymongo.errors.DuplicateKeyError, which fban.py handles.
+    FBAN.insert_one({"chat_id": str(chat_id), "fed_name": fed_name})
 
 
 def del_flist(chat_id):
-    rem = SESSION.query(Fban).get(str(chat_id))
-    if rem:
-        SESSION.delete(rem)
-        SESSION.commit()
+    FBAN.delete_one({"chat_id": str(chat_id)})
 
 
 def del_flist_all():
-    SESSION.execute("""TRUNCATE TABLE fban""")
-    SESSION.commit()
+    FBAN.delete_many({})

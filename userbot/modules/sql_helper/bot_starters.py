@@ -1,23 +1,7 @@
-from sqlalchemy import Column, String, UnicodeText
+from userbot.modules.sql_helper import DB, to_doc, to_docs, upsert
 
-from userbot.modules.sql_helper import BASE, SESSION
-
-
-class Bot_Starters(BASE):
-    __tablename__ = "bot_starters"
-    user_id = Column(String(14), primary_key=True)
-    first_name = Column(UnicodeText)
-    date = Column(UnicodeText)
-    username = Column(UnicodeText)
-
-    def __init__(self, user_id, first_name, date, username):
-        self.user_id = str(user_id)
-        self.first_name = first_name
-        self.date = date
-        self.username = username
-
-
-Bot_Starters.__table__.create(checkfirst=True)
+BOT_STARTERS = DB["bot_starters"]
+BOT_STARTERS.create_index("user_id", unique=True)
 
 
 def add_starter_to_db(
@@ -26,45 +10,25 @@ def add_starter_to_db(
     date,
     username,
 ):
-    to_check = get_starter_details(user_id)
-    if not to_check:
-        user = Bot_Starters(str(user_id), first_name, date, username)
-        SESSION.add(user)
-        SESSION.commit()
-        return True
-    rem = SESSION.query(Bot_Starters).get(str(user_id))
-    SESSION.delete(rem)
-    SESSION.commit()
-    user = Bot_Starters(str(user_id), first_name, date, username)
-    SESSION.add(user)
-    SESSION.commit()
+    upsert(
+        BOT_STARTERS,
+        {"user_id": str(user_id)},
+        {"first_name": first_name, "date": date, "username": username},
+    )
     return True
 
 
 def del_starter_from_db(user_id):
-    to_check = get_starter_details(user_id)
-    if not to_check:
-        return False
-    rem = SESSION.query(Bot_Starters).get(str(user_id))
-    SESSION.delete(rem)
-    SESSION.commit()
-    return True
+    result = BOT_STARTERS.delete_one({"user_id": str(user_id)})
+    return bool(result.deleted_count)
 
 
 def get_starter_details(user_id):
-    try:
-        _result = SESSION.query(Bot_Starters).get(str(user_id))
-        if _result:
-            return _result
-        return None
-    finally:
-        SESSION.close()
+    return to_doc(BOT_STARTERS.find_one({"user_id": str(user_id)}))
 
 
 def get_all_starters():
     try:
-        return SESSION.query(Bot_Starters).all()
-    except BaseException:
+        return to_docs(BOT_STARTERS.find())
+    except Exception:
         return None
-    finally:
-        SESSION.close()

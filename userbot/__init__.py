@@ -170,8 +170,15 @@ UPSTREAM_REPO_URL = os.environ.get(
 # Custom Name Sticker Pack
 S_PACK_NAME = os.environ.get("S_PACK_NAME", None)
 
-# SQL Database URI
-DB_URI = os.environ.get("DATABASE_URL", None)
+# MongoDB URI, e.g. mongodb+srv://user:password@cluster0.xxxxx.mongodb.net/
+MONGO_URI = os.environ.get("MONGO_URI", None) or None
+# Optional database name. If empty, the name in the URI is used,
+# and if the URI has none either, "man_userbot" is used.
+MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME", None) or None
+# A mongodb:// URL placed in DATABASE_URL is accepted too.
+_legacy_db_url = os.environ.get("DATABASE_URL", None)
+if not MONGO_URI and _legacy_db_url and _legacy_db_url.startswith("mongodb"):
+    MONGO_URI = _legacy_db_url
 
 # OCR API key
 OCR_SPACE_API_KEY = os.environ.get("OCR_SPACE_API_KEY", None)
