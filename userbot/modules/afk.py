@@ -2,6 +2,12 @@
 # Ported by X_ImFine
 # Recode by @mrismanaziz
 
+# ᴋɪʀᴜ - ᴜsᴇʀʙᴏᴛ
+# Copyright (c) 2026 KIRU-OP
+# Credits: KIRU-OP Development Team
+# Maintained by KIRU-OP
+# Repository: https://github.com/KIRU-OP/Man-Userbot
+
 import asyncio
 from datetime import datetime
 
