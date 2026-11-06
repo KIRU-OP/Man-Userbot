@@ -1,58 +1,22 @@
-from sqlalchemy import Column, Numeric, UnicodeText
+from userbot.modules.sql_helper import DB, to_doc, to_docs, upsert
 
-from userbot.modules.sql_helper import BASE, SESSION
-
-
-class Note(BASE):
-    __tablename__ = "snip"
-    keyword = Column(UnicodeText, primary_key=True, nullable=False)
-    reply = Column(UnicodeText)
-    f_mesg_id = Column(Numeric)
-
-    def __init__(self, keyword, reply, f_mesg_id):
-        self.keyword = keyword
-        self.reply = reply
-        self.f_mesg_id = f_mesg_id
-
-
-Note.__table__.create(checkfirst=True)
+SNIPS = DB["snip"]
+SNIPS.create_index("keyword", unique=True)
 
 
 def get_note(keyword):
-    try:
-        return SESSION.query(Note).get(keyword)
-    finally:
-        SESSION.close()
+    return to_doc(SNIPS.find_one({"keyword": keyword}))
 
 
 def get_notes():
-    try:
-        return SESSION.query(Note).all()
-    finally:
-        SESSION.close()
+    return to_docs(SNIPS.find())
 
 
 def add_note(keyword, reply, f_mesg_id):
-    to_check = get_note(keyword)
-    if not to_check:
-        adder = Note(keyword, reply, f_mesg_id)
-        SESSION.add(adder)
-        SESSION.commit()
-        return True
-    rem = SESSION.query(Note).get(keyword)
-    SESSION.delete(rem)
-    SESSION.commit()
-    adder = Note(keyword, reply, f_mesg_id)
-    SESSION.add(adder)
-    SESSION.commit()
-    return False
+    """Returns True if the snip is new, False if it replaced an old one."""
+    return upsert(SNIPS, {"keyword": keyword}, {"reply": reply, "f_mesg_id": f_mesg_id})
 
 
 def rm_note(keyword):
-    to_check = get_note(keyword)
-    if not to_check:
-        return False
-    rem = SESSION.query(Note).get(keyword)
-    SESSION.delete(rem)
-    SESSION.commit()
-    return True
+    result = SNIPS.delete_one({"keyword": keyword})
+    return bool(result.deleted_count)

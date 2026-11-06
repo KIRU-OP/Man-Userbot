@@ -1,36 +1,19 @@
-from sqlalchemy import Column, Numeric
+from userbot.modules.sql_helper import DB, to_doc, upsert
 
-from userbot.modules.sql_helper import BASE, SESSION
-
-
-class NOLogPMs(BASE):
-    __tablename__ = "no_log_pms"
-    chat_id = Column(Numeric, primary_key=True)
-
-    def __init__(self, chat_id, reason=""):
-        self.chat_id = chat_id
-
-
-NOLogPMs.__table__.create(checkfirst=True)
+NO_LOG_PMS = DB["no_log_pms"]
+NO_LOG_PMS.create_index("chat_id", unique=True)
 
 
 def is_approved(chat_id):
     try:
-        return SESSION.query(NOLogPMs).filter(NOLogPMs.chat_id == chat_id).one()
-    except BaseException:
+        return to_doc(NO_LOG_PMS.find_one({"chat_id": chat_id}))
+    except Exception:
         return None
-    finally:
-        SESSION.close()
 
 
 def approve(chat_id):
-    adder = NOLogPMs(chat_id)
-    SESSION.add(adder)
-    SESSION.commit()
+    upsert(NO_LOG_PMS, {"chat_id": chat_id})
 
 
 def disapprove(chat_id):
-    rem = SESSION.query(NOLogPMs).get(chat_id)
-    if rem:
-        SESSION.delete(rem)
-        SESSION.commit()
+    NO_LOG_PMS.delete_one({"chat_id": chat_id})

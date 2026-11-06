@@ -1,54 +1,35 @@
-from sqlalchemy import Column, UnicodeText
-from sqlalchemy_json import MutableJson, NestedMutableJson
+from userbot.modules.sql_helper import DB, to_doc, to_docs, upsert
 
-from userbot.modules.sql_helper import BASE, SESSION
-
-
-class Cat_GlobalCollection_Json(BASE):
-    __tablename__ = "cat_globalcollectionjson"
-    keywoard = Column(UnicodeText, primary_key=True)
-    json = Column(MutableJson)
-    njson = Column(NestedMutableJson)
-
-    def __init__(self, keywoard, json, njson):
-        self.keywoard = keywoard
-        self.json = json
-        self.njson = njson
+COLLECTIONS = DB["cat_globalcollectionjson"]
+COLLECTIONS.create_index("keywoard", unique=True)
 
 
-Cat_GlobalCollection_Json.__table__.create(checkfirst=True)
+def _clean(value):
+    """BSON only allows string keys, so stringify dict keys recursively."""
+    if isinstance(value, dict):
+        return {str(k): _clean(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_clean(v) for v in value]
+    return value
 
 
 def get_collection(keywoard):
-    try:
-        return SESSION.query(Cat_GlobalCollection_Json).get(keywoard)
-    finally:
-        SESSION.close()
+    return to_doc(COLLECTIONS.find_one({"keywoard": keywoard}))
 
 
-def add_collection(keywoard, json, njson={}):
-    to_check = get_collection(keywoard)
-    if to_check:
-        keyword_items = SESSION.query(Cat_GlobalCollection_Json).get(keywoard)
-        SESSION.delete(keyword_items)
-    keyword_items = Cat_GlobalCollection_Json(keywoard, json, njson)
-    SESSION.add(keyword_items)
-    SESSION.commit()
+def add_collection(keywoard, json, njson=None):
+    upsert(
+        COLLECTIONS,
+        {"keywoard": keywoard},
+        {"json": _clean(json), "njson": _clean(njson or {})},
+    )
     return True
 
 
 def del_collection(keywoard):
-    to_check = get_collection(keywoard)
-    if not to_check:
-        return False
-    keyword_items = SESSION.query(Cat_GlobalCollection_Json).get(keywoard)
-    SESSION.delete(keyword_items)
-    SESSION.commit()
-    return True
+    result = COLLECTIONS.delete_one({"keywoard": keywoard})
+    return bool(result.deleted_count)
 
 
 def get_collections():
-    try:
-        return SESSION.query(Cat_GlobalCollection_Json).all()
-    finally:
-        SESSION.close()
+    return to_docs(COLLECTIONS.find())
