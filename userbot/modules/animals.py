@@ -17,6 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with TG-UserBot.  If not, see <https://www.gnu.org/licenses/>.
 
+# ᴋɪʀᴜ - ᴜsᴇʀʙᴏᴛ
+# Copyright (c) 2026 KIRU-OP
+# Credits: KIRU-OP Development Team
+# Maintained by KIRU-OP
+# Repository: https://github.com/KIRU-OP/Man-Userbot
+
 import requests
 
 from userbot import CMD_HANDLER as cmd
